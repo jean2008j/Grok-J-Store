@@ -127,6 +127,12 @@ export const adminCall = createServerFn({ method: "POST" })
       }
       if (data.op === "update") {
         const patch = { ...(data.patch || {}) };
+        if (table === "orders" && "status" in patch) {
+          const status = patch.status;
+          if (status !== "pending" && status !== "completed") {
+            return { data: null, error: { message: "Invalid order status" } };
+          }
+        }
         if (typeof patch.image_url === "string" && patch.image_url.startsWith("data:")) {
           patch.image_url = await storeImage(patch.image_url);
         }
