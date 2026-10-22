@@ -359,7 +359,7 @@ export function StoreView() {
       return;
     }
 
-    const phoneDigits = customerInfo.phone.replace(/\\D/g, '');
+    const phoneDigits = customerInfo.phone.replace(/\D/g, '');
     if (phoneDigits.length < 8 || phoneDigits.length > 15) {
       alert(lang === 'AR' ? 'يرجى إدخال رقم هاتف صحيح' : 'Please enter a valid phone number');
       return;
