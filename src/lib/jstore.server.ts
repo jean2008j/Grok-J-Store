@@ -200,11 +200,11 @@ export async function placeOrderAtomic(input: {
   const customerName = String(input.customer_name || "").trim();
   const phone = String(input.phone || "").trim();
   const address = String(input.address || "").trim();
-  const phoneDigits = phone.replace(/\\D/g, "");
+  const phoneDigits = phone.replace(/\D/g, "");
   if (customerName.length < 2 || customerName.length > 120) {
     return { ok: false as const, error: "Please enter a valid full name" };
   }
-  if (!/^\\+?[0-9\\s().-]{8,24}$/.test(phone) || phoneDigits.length < 8 || phoneDigits.length > 15) {
+  if (!/^\+?[0-9\s().-]{8,24}$/.test(phone) || phoneDigits.length < 8 || phoneDigits.length > 15) {
     return { ok: false as const, error: "Please enter a valid phone number" };
   }
   if (address.length < 5 || address.length > 400) {
@@ -212,7 +212,7 @@ export async function placeOrderAtomic(input: {
   }
 
   const requestedPayment = String(input.payment_method || "").trim();
-  const paymentMatch = requestedPayment.match(/^(Cash|Syriatel Cash \\(([A-Za-z0-9_-]{3,50})\\)|Sham Cash \\(([A-Za-z0-9_-]{3,50})\\))$/);
+  const paymentMatch = requestedPayment.match(/^(Cash|Syriatel Cash \(([A-Za-z0-9_-]{3,50})\)|Sham Cash \(([A-Za-z0-9_-]{3,50})\))$/);
   if (!paymentMatch) return { ok: false as const, error: "Invalid payment method or transaction code" };
   const paymentMethod = requestedPayment;
   const cityId = String(input.cityId || "");
