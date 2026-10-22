@@ -153,6 +153,17 @@ async function casSize(
   return { ok: rows.length > 0, error: rows.length ? "" : "conflict" };
 }
 
+async function casLegacyStock(id: number, expected: number, next: number, emptyMap: boolean) {
+  const filter = new URLSearchParams();
+  filter.set("id", `eq.${id}`);
+  filter.set("stock", `eq.${expected}`);
+  filter.set("sizes_stock", emptyMap ? `eq.${JSON.stringify({})}` : "is.null");
+  const { data, error } = await sbUpdate("products", filter.toString(), { stock: next });
+  if (error) return { ok: false as const, error: error.message };
+  const rows = Array.isArray(data) ? data : [];
+  return { ok: rows.length > 0, error: rows.length ? "" : "conflict" };
+}
+
 export type OrderItemIn = {
   id: number;
   qty: number;
@@ -181,20 +192,55 @@ export async function placeOrderAtomic(input: {
   status: "pending" | "completed";
   cityId?: string;
 }) {
-  if (!input.items?.length) return { ok: false as const, error: "Empty cart" };
+  if (!Array.isArray(input.items) || input.items.length === 0) {
+    return { ok: false as const, error: "Empty cart" };
+  }
+  if (input.items.length > 50) return { ok: false as const, error: "Too many cart items" };
 
-  const applied: { id: number; size: string; qty: number }[] = [];
+  const customerName = String(input.customer_name || "").trim();
+  const phone = String(input.phone || "").trim();
+  const address = String(input.address || "").trim();
+  const phoneDigits = phone.replace(/\D/g, "");
+  if (customerName.length < 2 || customerName.length > 120) {
+    return { ok: false as const, error: "Please enter a valid full name" };
+  }
+  if (!/^\+?[0-9\s().-]{8,24}$/.test(phone) || phoneDigits.length < 8 || phoneDigits.length > 15) {
+    return { ok: false as const, error: "Please enter a valid phone number" };
+  }
+  if (address.length < 5 || address.length > 400) {
+    return { ok: false as const, error: "Please enter a valid delivery address" };
+  }
+
+  const requestedPayment = String(input.payment_method || "").trim();
+  const paymentMatch = requestedPayment.match(/^(Cash|Syriatel Cash \(([A-Za-z0-9_-]{3,50})\)|Sham Cash \(([A-Za-z0-9_-]{3,50})\))$/);
+  if (!paymentMatch) return { ok: false as const, error: "Invalid payment method or transaction code" };
+  const paymentMethod = requestedPayment;
+  const cityId = String(input.cityId || "");
+  if (!Object.prototype.hasOwnProperty.call(CITY_FEE, cityId)) {
+    return { ok: false as const, error: "Invalid delivery region" };
+  }
+
+  const applied: { id: number; size: string; qty: number; legacyStock: boolean }[] = [];
 
   async function rollback() {
-    for (const step of applied.reverse()) {
+    for (const step of [...applied].reverse()) {
       for (let i = 0; i < 4; i++) {
         const row = await getProduct(step.id);
         if (!row) break;
+        if (step.legacyStock) {
+          const currentStock = Number(row.stock) || 0;
+          const emptyMap = !row.sizes_stock || Object.keys(row.sizes_stock).length === 0;
+          const restored = await casLegacyStock(row.id, currentStock, currentStock + step.qty, emptyMap);
+          if (restored.ok) break;
+          if (restored.error && restored.error !== "conflict") break;
+          continue;
+        }
         const map: SizeMap = { ...(row.sizes_stock || {}) };
         const cur = Number(map[step.size] ?? 0);
         map[step.size] = cur + step.qty;
         const r = await casSize(step.id, step.size, cur, map);
         if (r.ok) break;
+        if (r.error && r.error !== "conflict") break;
       }
     }
   }
@@ -204,9 +250,10 @@ export async function placeOrderAtomic(input: {
 
   try {
     for (const item of input.items) {
-      const qty = Math.floor(Number(item.qty));
-      const size = String(item.selectedSize || "");
-      if (!item.id || qty < 1 || qty > 99 || !size) {
+      const id = Number(item.id);
+      const qty = Number(item.qty);
+      const size = String(item.selectedSize || "").trim();
+      if (!Number.isSafeInteger(id) || id < 1 || !Number.isSafeInteger(qty) || qty < 1 || qty > 99 || !size || size.length > 20) {
         await rollback();
         return { ok: false as const, error: "Invalid item" };
       }
@@ -221,13 +268,24 @@ export async function placeOrderAtomic(input: {
           return { ok: false as const, error: "Product missing" };
         }
         const map: SizeMap = { ...(row.sizes_stock || {}) };
-        const cur = map[size] !== undefined ? Number(map[size]) : Number(row.stock) || 0;
-        if (cur < qty) {
+        const hasSizeMap = Object.keys(map).length > 0;
+        if (hasSizeMap && !Object.prototype.hasOwnProperty.call(map, size)) {
+          await rollback();
+          return { ok: false as const, error: `Invalid size for product: ${row.name}` };
+        }
+        if (!hasSizeMap && Array.isArray(row.sizes) && row.sizes.length > 0 && !row.sizes.includes(size)) {
+          await rollback();
+          return { ok: false as const, error: `Invalid size for product: ${row.name}` };
+        }
+        const cur = hasSizeMap ? Number(map[size]) : Number(row.stock) || 0;
+        if (!Number.isFinite(cur) || cur < qty) {
           await rollback();
           return { ok: false as const, error: `Out of stock: ${row.name} (${size})` };
         }
-        map[size] = cur - qty;
-        const r = await casSize(row.id, size, cur, map);
+
+        const r = hasSizeMap
+          ? await casSize(row.id, size, cur, { ...map, [size]: cur - qty })
+          : await casLegacyStock(row.id, cur, cur - qty, !row.sizes_stock || Object.keys(row.sizes_stock).length === 0);
         if (r.error && r.error !== "conflict") {
           await rollback();
           return { ok: false as const, error: r.error };
@@ -237,7 +295,7 @@ export async function placeOrderAtomic(input: {
           price = Number(row.price) || 0;
           name = row.name;
           cost = Number(row.cost_price) || 0;
-          applied.push({ id: row.id, size, qty });
+          applied.push({ id: row.id, size, qty, legacyStock: !hasSizeMap });
         }
       }
       if (!done) {
@@ -248,17 +306,19 @@ export async function placeOrderAtomic(input: {
       priced.push({ id: Number(item.id), name, price, qty, selectedSize: size, cost_price: cost });
     }
 
-    const fee = input.order_type === "POS" ? 0 : CITY_FEE[input.cityId || ""] ?? 0;
+    // This endpoint is public checkout: never trust the browser to choose POS/completed.
+    const fee = CITY_FEE[cityId] ?? 0;
     const inserted = await sbInsert("orders", [
       {
-        customer_name: String(input.customer_name || "Customer").slice(0, 120),
-        phone: String(input.phone || "-").slice(0, 40),
-        address: String(input.address || "").slice(0, 400),
-        payment_method: String(input.payment_method || "Cash").slice(0, 80),
+        customer_name: customerName,
+        phone,
+        address: address.slice(0, 400),
+        // Online-wallet codes are references only; the store must verify payment manually.
+        payment_method: paymentMethod.slice(0, 80),
         totals: subtotal + fee,
-        order_type: input.order_type,
+        order_type: "Online",
         items: priced,
-        status: input.status,
+        status: "pending",
         created_at: new Date().toISOString(),
       },
     ]);

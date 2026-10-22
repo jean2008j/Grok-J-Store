@@ -24,7 +24,7 @@ const TRANSLATIONS = {
     wishlistEmpty: 'Your wishlist is empty.',
     cartEmpty: 'Your cart is empty.',
     checkoutTitle: 'Checkout',
-    orderConfirmed: 'Order Confirmed!',
+    orderConfirmed: 'Order Received',
     subtotal: 'Subtotal:',
     shippingFee: 'Shipping Fee:',
     total: 'Total Amount:',
@@ -47,7 +47,7 @@ const TRANSLATIONS = {
     sham: 'Sham Cash',
     enterTxCode: 'Enter Transaction Code (TX Code)',
     successCodMsg: 'Information sent successfully! We will contact you soon.',
-    successOnlineMsg: 'Payment transaction completed successfully! Order placed.',
+    successOnlineMsg: 'Order received. Payment is pending verification by the store.',
     processingOrder: 'Processing your order...',
     loadingStore: 'Loading J-STORE Experience...',
     addedCart: 'Added to Cart 🛒',
@@ -77,7 +77,7 @@ const TRANSLATIONS = {
     wishlistEmpty: 'قائمة المفضلة فارغة حالياً.',
     cartEmpty: 'السلة فارغة حالياً.',
     checkoutTitle: 'إتمام الطلب',
-    orderConfirmed: 'تم تأكيد الطلب بنجاح!',
+    orderConfirmed: 'تم استلام الطلب',
     subtotal: 'المجموع الفرعي:',
     shippingFee: 'أجور التوصيل:',
     total: 'المجموع الكلي:',
@@ -100,7 +100,7 @@ const TRANSLATIONS = {
     sham: 'شام كاش',
     enterTxCode: 'رمز التحويل (TX Code)',
     successCodMsg: 'تم ارسال المعلومات بنجاح! سيتم الاتصال بك قريباً.',
-    successOnlineMsg: 'تمت عملية الدفع بنجاح!',
+    successOnlineMsg: 'تم استلام الطلب، والدفع بانتظار التحقق من الإدارة.',
     processingOrder: 'جاري معالجة الطلب...',
     loadingStore: 'جاري التحميل...',
     addedCart: 'تمت الإضافة للسلة 🛒',
@@ -354,19 +354,30 @@ export function StoreView() {
   const handleCompleteOrder = async (e: any) => {
     e.preventDefault();
 
-    if (!customerInfo.address.trim()) {
-      alert(lang === 'AR' ? 'يرجى إدخال عنوان التوصيل أو التقاط موقعك الجغرافي' : 'Please enter delivery address');
+    if (customerInfo.name.trim().length < 2) {
+      alert(lang === 'AR' ? 'يرجى إدخال الاسم الكامل' : 'Please enter your full name');
       return;
     }
 
-    if ((paymentMethod === 'syriatel' || paymentMethod === 'sham') && !customerInfo.txCode.trim()) {
-      alert(t.enterTxCode);
+    const phoneDigits = customerInfo.phone.replace(/\D/g, '');
+    if (phoneDigits.length < 8 || phoneDigits.length > 15) {
+      alert(lang === 'AR' ? 'يرجى إدخال رقم هاتف صحيح' : 'Please enter a valid phone number');
+      return;
+    }
+
+    if (customerInfo.address.trim().length < 5) {
+      alert(lang === 'AR' ? 'يرجى إدخال عنوان توصيل تفصيلي أو تحديد موقعك' : 'Please enter a complete delivery address');
+      return;
+    }
+
+    if ((paymentMethod === 'syriatel' || paymentMethod === 'sham') && !/^[A-Za-z0-9_-]{3,50}$/.test(customerInfo.txCode.trim())) {
+      alert(lang === 'AR' ? 'رمز التحويل يجب أن يتكون من 3 إلى 50 حرفاً أو رقماً' : 'Transaction code must be 3–50 letters, numbers, dashes or underscores');
       return;
     }
 
     setIsProcessing(true);
 
-    const paymentText = paymentMethod === 'cod' ? 'Cash' : (paymentMethod === 'syriatel' ? `Syriatel Cash (${customerInfo.txCode})` : `Sham Cash (${customerInfo.txCode})`);
+    const paymentText = paymentMethod === 'cod' ? 'Cash' : (paymentMethod === 'syriatel' ? `Syriatel Cash (${customerInfo.txCode.trim()})` : `Sham Cash (${customerInfo.txCode.trim()})`);
 
     const orderItemsPayload = cart.map(item => ({
       id: item.id,
@@ -386,8 +397,8 @@ export function StoreView() {
             name: item.name,
             price: item.price,
           })),
-          customer_name: customerInfo.name || 'Online Customer',
-          phone: customerInfo.phone || '-',
+          customer_name: customerInfo.name.trim(),
+          phone: customerInfo.phone.trim(),
           address: `${selectedCity.name[lang]} - ${customerInfo.address}`,
           payment_method: paymentText,
           order_type: 'Online',
@@ -408,7 +419,8 @@ export function StoreView() {
         alert(result.error || (lang === 'AR' ? 'حدث خطأ أثناء حفظ الطلب، يرجى المحاولة لاحقاً' : 'Failed to save order'));
       }
     } catch (err) {
-      console.log('Order error:', err);
+      console.error('Order error:', err);
+      alert(lang === 'AR' ? 'تعذر إرسال الطلب بسبب مشكلة اتصال. لم يتم تأكيد الطلب؛ يرجى المحاولة مجدداً.' : 'Could not submit the order due to a connection error. Please try again.');
     } finally {
       setIsProcessing(false);
     }
