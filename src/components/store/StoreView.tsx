@@ -601,36 +601,38 @@ export function StoreView() {
         </div>
       </header>
 
-      {/* Premium collection hero */}
-      <section className="px-3 sm:px-6 pt-5 sm:pt-8">
-        <div className="relative isolate overflow-hidden max-w-7xl mx-auto rounded-[1.75rem] sm:rounded-[2.25rem] border border-[#29342b] bg-[radial-gradient(ellipse_at_82%_18%,rgba(56,115,75,0.32),transparent_38%),linear-gradient(135deg,#111713_0%,#080a09_55%,#101b14_100%)] shadow-[0_24px_80px_rgba(0,0,0,0.28)]">
-          <div className="absolute -right-16 -top-24 h-72 w-72 rounded-full border border-emerald-300/10 sm:h-96 sm:w-96" aria-hidden="true" />
-          <div className="absolute -right-5 -top-12 h-56 w-56 rounded-full border border-emerald-300/10 sm:h-72 sm:w-72" aria-hidden="true" />
-          <div className="relative grid min-h-[300px] sm:min-h-[350px] md:grid-cols-[1.2fr_0.8fr] items-center gap-8 px-6 py-9 sm:px-10 sm:py-12 lg:px-14">
-            <div className="max-w-2xl">
-              <div className="inline-flex items-center gap-2 rounded-full border border-emerald-300/20 bg-emerald-300/[0.07] px-3 py-1.5 text-[9px] sm:text-[10px] font-bold uppercase tracking-[0.18em] text-emerald-200">
-                <span className="h-1.5 w-1.5 rounded-full bg-emerald-300 shadow-[0_0_12px_rgba(110,231,183,0.8)]" />
+      {/* Editorial hero: product photography makes the storefront feel distinct */}
+      <section className="px-3 sm:px-6 pt-4 sm:pt-7">
+        <div className="relative isolate mx-auto max-w-7xl overflow-hidden rounded-[1.5rem] sm:rounded-[2rem] border border-white/10 bg-[#080a09] shadow-[0_28px_90px_rgba(0,0,0,0.38)]">
+          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_10%_50%,rgba(30,76,46,0.48),transparent_55%)]" aria-hidden="true" />
+          <div className="relative grid min-h-[470px] grid-cols-1 items-stretch sm:min-h-[500px] md:min-h-[430px] md:grid-cols-2">
+            <div className="relative z-10 flex flex-col items-start justify-center px-6 pb-7 pt-9 sm:px-10 sm:py-12 lg:px-14">
+              <div className="inline-flex items-center gap-2 rounded-full border border-emerald-200/25 bg-black/35 px-3 py-1.5 text-[9px] sm:text-[10px] font-bold uppercase tracking-[0.2em] text-emerald-100 backdrop-blur">
+                <span className="h-1.5 w-1.5 rounded-full bg-emerald-300" />
                 {t.heroEyebrow}
               </div>
-              <h2 className="mt-5 whitespace-pre-line text-4xl sm:text-5xl lg:text-6xl font-black leading-[1.08] tracking-[-0.055em] text-white">{t.heroHeadline}</h2>
-              <p className="mt-4 max-w-lg text-sm sm:text-base leading-7 text-neutral-300">{t.heroDescription}</p>
-              <button onClick={() => document.getElementById('products')?.scrollIntoView({ behavior: 'smooth', block: 'start' })} className="mt-7 inline-flex items-center justify-center gap-3 rounded-full bg-emerald-300 px-5 py-3 text-xs sm:text-sm font-extrabold text-[#071009] shadow-[0_8px_28px_rgba(110,231,183,0.18)] transition hover:-translate-y-0.5 hover:bg-emerald-200 focus:outline-none focus:ring-2 focus:ring-emerald-200 focus:ring-offset-2 focus:ring-offset-[#0b100c]">
+              <h2 className="mt-5 whitespace-pre-line text-[2.65rem] sm:text-6xl lg:text-7xl font-black leading-[0.98] tracking-[-0.065em] text-white">{t.heroHeadline}</h2>
+              <p className="mt-5 max-w-md text-sm sm:text-base leading-7 text-neutral-200/90">{t.heroDescription}</p>
+              <button onClick={() => document.getElementById('products')?.scrollIntoView({ behavior: 'smooth', block: 'start' })} className="mt-7 inline-flex items-center justify-center gap-4 rounded-full bg-emerald-300 px-6 py-3.5 text-xs sm:text-sm font-extrabold text-[#071009] shadow-[0_8px_30px_rgba(110,231,183,0.2)] transition hover:-translate-y-0.5 hover:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-200 focus:ring-offset-2 focus:ring-offset-[#0b100c]">
                 {t.heroCta}<span aria-hidden="true">{lang === 'AR' ? '←' : '→'}</span>
               </button>
+              <div className="mt-8 flex items-center gap-3 border-t border-white/15 pt-4 text-[9px] sm:text-[10px] font-semibold uppercase tracking-[0.16em] text-white/60">
+                <span>J-STORE</span><span className="h-1 w-1 rounded-full bg-emerald-300" /><span>SPORT / STREET / EVERYDAY</span>
+              </div>
             </div>
-            <div className="relative hidden md:flex items-center justify-center min-h-[220px]" aria-hidden="true">
-              <div className="absolute h-64 w-64 rounded-full bg-emerald-400/[0.07] blur-2xl" />
-              <div className="relative flex h-52 w-52 items-center justify-center rounded-full border border-emerald-100/15 bg-black/20 shadow-[inset_0_0_55px_rgba(110,231,183,0.06)]">
-                <div className="absolute inset-3 rounded-full border border-dashed border-emerald-100/20" />
-                <span className="select-none text-[8.5rem] font-black italic leading-none tracking-[-0.13em] text-white/[0.92] drop-shadow-[0_10px_35px_rgba(110,231,183,0.12)]">J</span>
-                <span className="absolute bottom-7 right-5 rounded-full border border-emerald-100/20 bg-[#101a12] px-3 py-1.5 text-[9px] font-bold tracking-[0.2em] text-emerald-100">J-STORE</span>
+            <div className="relative min-h-[210px] sm:min-h-[250px] md:min-h-0">
+              <img src="https://images.unsplash.com/photo-1552346154-21d32810aba3?auto=format&fit=crop&w=1400&q=85" alt="Premium sneakers from the J-STORE collection" fetchPriority="high" className="absolute inset-0 h-full w-full object-cover object-center" />
+              <div className="absolute inset-0 bg-gradient-to-t from-[#080a09] via-[#080a09]/15 to-transparent md:bg-gradient-to-r md:from-[#080a09] md:via-[#080a09]/15 md:to-transparent" />
+              <div className="absolute bottom-5 left-5 right-5 flex items-end justify-between gap-3 sm:bottom-7 sm:left-7 sm:right-7">
+                <span className="text-[9px] sm:text-[10px] font-bold uppercase tracking-[0.2em] text-white/75">NEW SEASON / 01</span>
+                <span className="rounded-full border border-white/20 bg-black/30 px-3 py-1.5 text-[9px] font-semibold text-white/90 backdrop-blur">J / SELECTED</span>
               </div>
             </div>
           </div>
         </div>
         <div className="mx-auto grid max-w-7xl grid-cols-3 gap-2 sm:gap-4 py-4 sm:py-5">
           {[t.trustQuality, t.trustDelivery, t.trustCheckout].map((item, index) => (
-            <div key={item} className="flex min-h-12 items-center justify-center gap-2 rounded-xl border border-white/[0.06] bg-white/[0.025] px-2 py-2.5 text-center text-[9px] sm:text-[11px] font-semibold text-neutral-300">
+            <div key={item} className="flex min-h-12 items-center justify-center gap-2 rounded-xl border border-white/[0.07] bg-[#101310] px-2 py-2.5 text-center text-[9px] sm:text-[11px] font-semibold text-neutral-300">
               <span className="hidden sm:inline-flex h-6 w-6 items-center justify-center rounded-full bg-emerald-300/10 text-emerald-200">{index === 0 ? '✦' : index === 1 ? '↗' : '✓'}</span>{item}
             </div>
           ))}
@@ -675,7 +677,7 @@ export function StoreView() {
           <span className="shrink-0 rounded-full border border-[#29342b] bg-[#111713] px-3 py-1.5 text-[10px] font-bold text-emerald-100">{filteredProducts.length} {lang === 'AR' ? 'منتج' : 'items'}</span>
         </div>
         {isLoadingProducts ? (
-          <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 gap-3 sm:gap-6">
+          <div className="grid grid-cols-2 gap-3 sm:gap-5 lg:grid-cols-3 xl:grid-cols-4">
             {[1, 2, 3, 4, 5, 6].map((n) => (
               <div key={n} className="rounded-2xl sm:rounded-3xl border p-3 sm:p-4 flex flex-col justify-between animate-pulse bg-[#101310] border-[#252d27]">
                 <div className="aspect-square rounded-lg sm:rounded-xl mb-3 bg-neutral-800"></div>
