@@ -515,11 +515,15 @@ export function AdminView() {
 
     setIsBulkUpdatingStatus(true);
     const results = await Promise.all(ids.map(async (id) => {
-      const { error } = await supabase
-        .from('orders')
-        .update({ status: newStatus })
-        .eq('id', id);
-      return { id, ok: !error };
+      try {
+        const { error } = await supabase
+          .from('orders')
+          .update({ status: newStatus })
+          .eq('id', id);
+        return { id, ok: !error };
+      } catch {
+        return { id, ok: false };
+      }
     }));
 
     const succeeded = results.filter((result) => result.ok).map((result) => result.id);
