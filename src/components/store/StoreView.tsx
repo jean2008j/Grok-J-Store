@@ -606,6 +606,16 @@ export function StoreView() {
         </div>
       </header>
 
+      <nav aria-label={lang === 'AR' ? 'معلومات المتجر' : 'Store information'} className="border-b border-white/5 bg-[#0b0e0c] px-3 py-2">
+        <div className="mx-auto flex max-w-7xl justify-center">
+          <a href="#store-info" className="inline-flex items-center gap-2 rounded-full border border-emerald-300/25 bg-emerald-300/[0.07] px-4 py-2 text-[11px] font-bold text-emerald-100 transition hover:bg-emerald-300/15 focus:outline-none focus:ring-2 focus:ring-emerald-300">
+            <span aria-hidden="true">ⓘ</span>
+            {lang === 'AR' ? 'سياسات المتجر · التوصيل · الدفع · الاستبدال والإرجاع' : 'Store policies · Delivery · Payment · Returns'}
+            <span aria-hidden="true">↓</span>
+          </a>
+        </div>
+      </nav>
+
       {/* Editorial hero: product photography makes the storefront feel distinct */}
       <section className="px-3 sm:px-6 pt-4 sm:pt-7">
         <div className="relative isolate mx-auto max-w-7xl overflow-hidden rounded-[1.5rem] sm:rounded-[2rem] border border-white/10 bg-[#080a09] shadow-[0_28px_90px_rgba(0,0,0,0.38)]">
@@ -703,6 +713,9 @@ export function StoreView() {
               const sizesStockMap = product.sizes_stock || {};
               const currentSizeStock = sizesStockMap[currentSelectedSize] !== undefined ? Number(sizesStockMap[currentSelectedSize]) : Number(product.stock) || 0;
               const isCompletelyOutOfStock = product.stock <= 0;
+              const hasSizeSpecificStock = Object.keys(sizesStockMap).length > 0;
+              const isSelectedSizeAvailable = currentSizeStock > 0;
+              const requiresAvailabilityConfirmation = !hasSizeSpecificStock && product.stock > 0;
 
               return (
                 <div 
@@ -729,11 +742,13 @@ export function StoreView() {
 
                     <div className="flex justify-between items-center mb-1">
                       <span className="text-[9px] font-bold tracking-[0.16em] text-emerald-200/70 uppercase">{product.brand}</span>
-                      {isCompletelyOutOfStock && (
-                        <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-red-500/20 text-red-400">
-                          {lang === 'AR' ? 'نفذ' : 'Out of Stock'}
-                        </span>
-                      )}
+                      <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded ${isCompletelyOutOfStock || (hasSizeSpecificStock && !isSelectedSizeAvailable) ? 'bg-red-500/15 text-red-400' : requiresAvailabilityConfirmation ? 'bg-amber-500/15 text-amber-300' : 'bg-emerald-500/15 text-emerald-300'}`}>
+                        {isCompletelyOutOfStock || (hasSizeSpecificStock && !isSelectedSizeAvailable)
+                          ? (lang === 'AR' ? 'غير متوفر' : 'Unavailable')
+                          : requiresAvailabilityConfirmation
+                            ? (lang === 'AR' ? 'التوفر يحتاج تأكيد' : 'Confirm availability')
+                            : (lang === 'AR' ? 'متوفر للمقاس المحدد' : 'Size available')}
+                      </span>
                     </div>
 
                     <h3 className="text-xs sm:text-sm font-bold text-white line-clamp-1 mb-2 tracking-tight">{product.name}</h3>
@@ -788,6 +803,49 @@ export function StoreView() {
           </div>
         )}
       </main>
+
+      {/* Store information and customer policies */}
+      <section id="store-info" className="mx-auto max-w-7xl px-3 sm:px-4 pb-16 scroll-mt-28">
+        <div className="mb-5 border-b border-white/10 pb-4">
+          <p className="mb-1 text-[10px] font-bold uppercase tracking-[0.22em] text-emerald-300">J-STORE / CUSTOMER CARE</p>
+          <h2 className="text-xl sm:text-2xl font-black tracking-tight text-white">{lang === 'AR' ? 'معلومات المتجر وسياسات الطلب' : 'Store information & order policies'}</h2>
+          <p className="mt-2 max-w-2xl text-xs sm:text-sm leading-6 text-neutral-400">{lang === 'AR' ? 'كل التفاصيل الأساسية قبل إرسال بيانات الطلب أو اختيار طريقة الدفع.' : 'Key details to review before sharing order details or choosing a payment method.'}</p>
+        </div>
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          <article className="rounded-2xl border border-[#252d27] bg-[#101310] p-4 sm:p-5">
+            <div className="mb-3 flex h-9 w-9 items-center justify-center rounded-xl bg-emerald-300/10 text-lg text-emerald-200">↗</div>
+            <h3 className="mb-2 text-sm font-extrabold text-white">{lang === 'AR' ? 'سياسة التوصيل' : 'Delivery policy'}</h3>
+            <p className="text-xs leading-6 text-neutral-300">{lang === 'AR' ? 'تختلف أجور التوصيل حسب منطقة الشحن، وتظهر في ملخص الطلب قبل التأكيد. يتم التواصل لتأكيد تفاصيل الطلب والتوصيل؛ مدة الوصول تُحدَّد عند التأكيد.' : 'Delivery fees depend on the selected region and appear in the order summary before confirmation. The store will confirm order and delivery details, including the expected arrival time.'}</p>
+          </article>
+          <article className="rounded-2xl border border-[#252d27] bg-[#101310] p-4 sm:p-5">
+            <div className="mb-3 flex h-9 w-9 items-center justify-center rounded-xl bg-emerald-300/10 text-lg text-emerald-200">↔</div>
+            <h3 className="mb-2 text-sm font-extrabold text-white">{lang === 'AR' ? 'الاستبدال والإرجاع' : 'Exchange & returns'}</h3>
+            <p className="text-xs leading-6 text-neutral-300">{lang === 'AR' ? 'إذا وصل المنتج بمقاس غير مناسب أو ظهرت مشكلة، تواصل مع المتجر قبل إعادة المنتج حتى يتم تأكيد إمكانية الاستبدال أو الإرجاع والخطوات المطلوبة. شروط ومدة المعالجة تحتاج تأكيداً من الإدارة.' : 'If the size is unsuitable or there is an issue with an item, contact the store before sending it back so eligibility and next steps can be confirmed. Final conditions and time limits must be confirmed by store management.'}</p>
+          </article>
+          <article className="rounded-2xl border border-[#252d27] bg-[#101310] p-4 sm:p-5">
+            <div className="mb-3 flex h-9 w-9 items-center justify-center rounded-xl bg-emerald-300/10 text-lg text-emerald-200">✓</div>
+            <h3 className="mb-2 text-sm font-extrabold text-white">{lang === 'AR' ? 'طرق الدفع' : 'Payment methods'}</h3>
+            <ul className="space-y-2 text-xs leading-5 text-neutral-300">
+              <li>{lang === 'AR' ? '• الدفع عند الاستلام' : '• Cash on delivery'}</li>
+              <li>{lang === 'AR' ? '• سيرياتيل كاش' : '• Syriatel Cash'}</li>
+              <li>{lang === 'AR' ? '• شام كاش' : '• Sham Cash'}</li>
+            </ul>
+            <p className="mt-2 text-xs leading-5 text-amber-200">{lang === 'AR' ? 'رمز التحويل مرجع فقط؛ لا يُعدّ إثباتاً للدفع، ويظل الدفع الإلكتروني بانتظار التحقق.' : 'A transfer code is only a reference, not proof of payment. Wallet payments remain pending verification.'}</p>
+          </article>
+          <article className="rounded-2xl border border-[#252d27] bg-[#101310] p-4 sm:p-5">
+            <div className="mb-3 flex h-9 w-9 items-center justify-center rounded-xl bg-emerald-300/10 text-lg text-emerald-200">J</div>
+            <h3 className="mb-2 text-sm font-extrabold text-white">{lang === 'AR' ? 'عن J-STORE' : 'About J-STORE'}</h3>
+            <p className="text-xs leading-6 text-neutral-300">{lang === 'AR' ? 'متجر للأحذية والملابس الرياضية واليومية. اختر المقاس المتاح، وراجع السعر وأجور التوصيل قبل إرسال الطلب. إذا لم تكن الكمية مؤكدة، سيظهر ذلك بوضوح على المنتج.' : 'A store for athletic footwear, sportswear and everyday essentials. Choose an available size and review the price and delivery fee before placing an order. Products without confirmed size-level stock are labelled clearly.'}</p>
+          </article>
+        </div>
+        <div className="mt-3 flex flex-col gap-3 rounded-2xl border border-emerald-300/20 bg-emerald-300/[0.06] p-4 sm:flex-row sm:items-center sm:justify-between sm:p-5">
+          <div>
+            <h3 className="text-sm font-extrabold text-white">{lang === 'AR' ? 'تحتاج مساعدة قبل الطلب؟' : 'Need help before ordering?'}</h3>
+            <p className="mt-1 text-xs leading-5 text-neutral-300">{lang === 'AR' ? 'تأكد من المقاس والتوفر وأجور التوصيل قبل إرسال الطلب. وسيلة التواصل المباشرة ستُضاف بعد تأكيد رقم المتجر.' : 'Confirm size, availability and delivery fees before ordering. A direct contact link will be enabled once the store contact number is confirmed.'}</p>
+          </div>
+          <span className="shrink-0 rounded-full border border-white/10 px-3 py-2 text-[10px] font-bold text-neutral-400">{lang === 'AR' ? 'معلومات المتجر' : 'Store details'}</span>
+        </div>
+      </section>
 
       {/* WISHLIST DRAWER (نافذة المفضلة الجانبية) */}
       {isWishlistOpen && (
