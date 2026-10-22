@@ -8,6 +8,15 @@ const TRANSLATIONS = {
     dir: 'ltr',
     heroTitle: 'J-STORE',
     heroSub: 'Premium Athletic Apparel, Footwear & Sportswear Collection',
+    heroEyebrow: 'THE EVERYDAY ATHLETE',
+    heroHeadline: 'Move with confidence.\nLook your best.',
+    heroDescription: 'Performance-inspired essentials, selected for comfort, quality and a clean athletic look.',
+    heroCta: 'Explore the collection',
+    collectionTitle: 'The collection',
+    collectionSub: 'Thoughtful essentials for every day.',
+    trustQuality: 'Curated quality',
+    trustDelivery: 'Delivery across Syria',
+    trustCheckout: 'Easy order process',
     searchPlaceholder: 'Search products, brands...',
     sizeGuideBtn: '📏 Size Guide',
     all: 'All Products',
@@ -61,6 +70,15 @@ const TRANSLATIONS = {
     dir: 'rtl',
     heroTitle: 'جي ستور',
     heroSub: 'تشكيلة فاخرة من الأحذية والملابس الرياضية بأعلى جودة',
+    heroEyebrow: 'اختيارات للرياضيين وكل يوم',
+    heroHeadline: 'تحرّك بثقة.\nوتميّز بإطلالتك.',
+    heroDescription: 'ملابس وأحذية رياضية مختارة بعناية لتجمع بين الراحة والجودة والإطلالة الأنيقة.',
+    heroCta: 'اكتشف التشكيلة',
+    collectionTitle: 'تشكيلة J-STORE',
+    collectionSub: 'قطع مختارة بعناية لتناسب كل يوم.',
+    trustQuality: 'جودة مختارة',
+    trustDelivery: 'توصيل إلى المحافظات',
+    trustCheckout: 'طلب سهل وواضح',
     searchPlaceholder: 'ابحث عن منتج، ماركة...',
     sizeGuideBtn: '📏 المقاسات',
     all: 'الكل',
@@ -495,9 +513,9 @@ export function StoreView() {
       )}
 
       {/* الهيدر العلوي */}
-      <header className="sticky top-0 z-40 backdrop-blur-md border-b px-3 sm:px-8 py-3.5 bg-black/90 border-neutral-800">
+      <header className="sticky top-0 z-40 backdrop-blur-xl border-b px-3 sm:px-8 py-3.5 bg-[#080a09]/95 border-[#252a26] shadow-[0_8px_30px_rgba(0,0,0,0.18)]">
         <div className="text-center mb-3">
-          <h1 className="text-2xl sm:text-4xl font-black tracking-tight uppercase italic text-white">
+          <h1 className="text-2xl sm:text-4xl font-black tracking-[-0.06em] uppercase italic text-white drop-shadow-sm">
             {t.heroTitle}
           </h1>
           <p className="text-[10px] sm:text-xs font-medium text-neutral-400 mt-0.5">
@@ -513,7 +531,7 @@ export function StoreView() {
                 placeholder={t.searchPlaceholder}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full text-xs py-2 rounded-full border outline-none px-3.5 bg-neutral-900 border-neutral-800 text-white placeholder-neutral-500"
+                className="w-full text-xs py-2.5 rounded-full border outline-none px-4 bg-[#111512] border-[#2b332d] text-white placeholder-neutral-500 focus:border-emerald-500/70 focus:ring-2 focus:ring-emerald-500/10 transition"
               />
             </div>
           </div>
@@ -583,8 +601,46 @@ export function StoreView() {
         </div>
       </header>
 
+      {/* Editorial hero: product photography makes the storefront feel distinct */}
+      <section className="px-3 sm:px-6 pt-4 sm:pt-7">
+        <div className="relative isolate mx-auto max-w-7xl overflow-hidden rounded-[1.5rem] sm:rounded-[2rem] border border-white/10 bg-[#080a09] shadow-[0_28px_90px_rgba(0,0,0,0.38)]">
+          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_10%_50%,rgba(30,76,46,0.48),transparent_55%)]" aria-hidden="true" />
+          <div className="relative grid min-h-[470px] grid-cols-1 items-stretch sm:min-h-[500px] md:min-h-[430px] md:grid-cols-2">
+            <div className="relative z-10 flex flex-col items-start justify-center px-6 pb-7 pt-9 sm:px-10 sm:py-12 lg:px-14">
+              <div className="inline-flex items-center gap-2 rounded-full border border-emerald-200/25 bg-black/35 px-3 py-1.5 text-[9px] sm:text-[10px] font-bold uppercase tracking-[0.2em] text-emerald-100 backdrop-blur">
+                <span className="h-1.5 w-1.5 rounded-full bg-emerald-300" />
+                {t.heroEyebrow}
+              </div>
+              <h2 className="mt-5 whitespace-pre-line text-[2.65rem] sm:text-6xl lg:text-7xl font-black leading-[0.98] tracking-[-0.065em] text-white">{t.heroHeadline}</h2>
+              <p className="mt-5 max-w-md text-sm sm:text-base leading-7 text-neutral-200/90">{t.heroDescription}</p>
+              <button onClick={() => document.getElementById('products')?.scrollIntoView({ behavior: 'smooth', block: 'start' })} className="mt-7 inline-flex items-center justify-center gap-4 rounded-full bg-emerald-300 px-6 py-3.5 text-xs sm:text-sm font-extrabold text-[#071009] shadow-[0_8px_30px_rgba(110,231,183,0.2)] transition hover:-translate-y-0.5 hover:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-200 focus:ring-offset-2 focus:ring-offset-[#0b100c]">
+                {t.heroCta}<span aria-hidden="true">{lang === 'AR' ? '←' : '→'}</span>
+              </button>
+              <div className="mt-8 flex items-center gap-3 border-t border-white/15 pt-4 text-[9px] sm:text-[10px] font-semibold uppercase tracking-[0.16em] text-white/60">
+                <span>J-STORE</span><span className="h-1 w-1 rounded-full bg-emerald-300" /><span>SPORT / STREET / EVERYDAY</span>
+              </div>
+            </div>
+            <div className="relative min-h-[210px] sm:min-h-[250px] md:min-h-0">
+              <img src="https://images.unsplash.com/photo-1552346154-21d32810aba3?auto=format&fit=crop&w=1400&q=85" alt="Premium sneakers from the J-STORE collection" fetchPriority="high" className="absolute inset-0 h-full w-full object-cover object-center" />
+              <div className="absolute inset-0 bg-gradient-to-t from-[#080a09] via-[#080a09]/15 to-transparent md:bg-gradient-to-r md:from-[#080a09] md:via-[#080a09]/15 md:to-transparent" />
+              <div className="absolute bottom-5 left-5 right-5 flex items-end justify-between gap-3 sm:bottom-7 sm:left-7 sm:right-7">
+                <span className="text-[9px] sm:text-[10px] font-bold uppercase tracking-[0.2em] text-white/75">NEW SEASON / 01</span>
+                <span className="rounded-full border border-white/20 bg-black/30 px-3 py-1.5 text-[9px] font-semibold text-white/90 backdrop-blur">J / SELECTED</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div className="mx-auto grid max-w-7xl grid-cols-3 gap-2 sm:gap-4 py-4 sm:py-5">
+          {[t.trustQuality, t.trustDelivery, t.trustCheckout].map((item, index) => (
+            <div key={item} className="flex min-h-12 items-center justify-center gap-2 rounded-xl border border-white/[0.07] bg-[#101310] px-2 py-2.5 text-center text-[9px] sm:text-[11px] font-semibold text-neutral-300">
+              <span className="hidden sm:inline-flex h-6 w-6 items-center justify-center rounded-full bg-emerald-300/10 text-emerald-200">{index === 0 ? '✦' : index === 1 ? '↗' : '✓'}</span>{item}
+            </div>
+          ))}
+        </div>
+      </section>
+
       {/* تصنيفات الأقسام */}
-      <div className="max-w-7xl mx-auto px-3 sm:px-4 pt-4 pb-2">
+      <div className="max-w-7xl mx-auto px-3 sm:px-4 pt-3 pb-2">
         <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-none">
           {[
             { id: 'all', label: t.all },
@@ -611,11 +667,19 @@ export function StoreView() {
       </div>
 
       {/* عرض المنتجات */}
-      <main className="max-w-7xl mx-auto px-3 sm:px-4 py-4 sm:py-6 pb-20">
+      <main id="products" className="max-w-7xl mx-auto scroll-mt-36 px-3 sm:px-4 py-4 sm:py-6 pb-20">
+        <div className="mb-5 sm:mb-7 flex items-end justify-between gap-3">
+          <div>
+            <p className="mb-1 text-[9px] sm:text-[10px] font-bold uppercase tracking-[0.22em] text-emerald-300">J-STORE / SELECTED</p>
+            <h2 className="text-xl sm:text-2xl font-black tracking-tight text-white">{t.collectionTitle}</h2>
+            <p className="mt-1 text-[10px] sm:text-xs text-neutral-400">{t.collectionSub}</p>
+          </div>
+          <span className="shrink-0 rounded-full border border-[#29342b] bg-[#111713] px-3 py-1.5 text-[10px] font-bold text-emerald-100">{filteredProducts.length} {lang === 'AR' ? 'منتج' : 'items'}</span>
+        </div>
         {isLoadingProducts ? (
-          <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 gap-3 sm:gap-6">
+          <div className="grid grid-cols-2 gap-3 sm:gap-5 lg:grid-cols-3 xl:grid-cols-4">
             {[1, 2, 3, 4, 5, 6].map((n) => (
-              <div key={n} className="rounded-xl sm:rounded-2xl border p-3 sm:p-4 flex flex-col justify-between animate-pulse bg-neutral-900/60 border-neutral-800">
+              <div key={n} className="rounded-2xl sm:rounded-3xl border p-3 sm:p-4 flex flex-col justify-between animate-pulse bg-[#101310] border-[#252d27]">
                 <div className="aspect-square rounded-lg sm:rounded-xl mb-3 bg-neutral-800"></div>
                 <div className="space-y-2">
                   <div className="h-2.5 rounded w-1/4 bg-neutral-800"></div>
@@ -638,7 +702,7 @@ export function StoreView() {
               return (
                 <div 
                   key={product.id} 
-                  className="bg-neutral-900 border border-neutral-800 rounded-xl sm:rounded-2xl p-2.5 sm:p-4 flex flex-col justify-between w-full relative"
+                  className="group bg-[#101310] border border-[#252d27] hover:border-emerald-300/35 rounded-2xl sm:rounded-3xl p-2.5 sm:p-4 flex flex-col justify-between w-full relative transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_18px_40px_rgba(0,0,0,0.24)]"
                 >
                   <button
                     onClick={(e) => { 
@@ -654,12 +718,12 @@ export function StoreView() {
                   </button>
 
                   <div>
-                    <div className="relative aspect-square w-full rounded-lg sm:rounded-xl overflow-hidden bg-black mb-2 flex items-center justify-center">
-                      <img src={product.image} alt={product.name} className="w-full h-full object-cover" />
+                    <div className="relative aspect-[0.92/1] w-full rounded-xl sm:rounded-2xl overflow-hidden bg-[#171c18] mb-3 flex items-center justify-center">
+                      <img src={product.image} alt={product.name} loading="lazy" className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-[1.04]" />
                     </div>
 
                     <div className="flex justify-between items-center mb-1">
-                      <span className="text-[9px] font-bold text-gray-400 uppercase">{product.brand}</span>
+                      <span className="text-[9px] font-bold tracking-[0.16em] text-emerald-200/70 uppercase">{product.brand}</span>
                       {isCompletelyOutOfStock && (
                         <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-red-500/20 text-red-400">
                           {lang === 'AR' ? 'نفذ' : 'Out of Stock'}
@@ -667,7 +731,7 @@ export function StoreView() {
                       )}
                     </div>
 
-                    <h3 className="text-xs font-bold text-white line-clamp-1 mb-2">{product.name}</h3>
+                    <h3 className="text-xs sm:text-sm font-bold text-white line-clamp-1 mb-2 tracking-tight">{product.name}</h3>
                     
                     <div className="mb-3">
                       <span className="text-[9px] text-gray-400 block mb-1 font-medium">{t.selectSize}</span>
@@ -700,14 +764,14 @@ export function StoreView() {
                   </div>
 
                   <div className="mt-1">
-                    <div className="text-sm sm:text-base font-black text-white mb-2">${product.price}</div>
+                    <div className="text-sm sm:text-lg font-black tracking-tight text-white mb-2">${product.price}</div>
                     <button
                       onClick={() => addToCart(product)}
                       disabled={isCompletelyOutOfStock || (sizesStockMap[currentSelectedSize] !== undefined && Number(sizesStockMap[currentSelectedSize]) <= 0)}
                       className={`w-full py-2 rounded-xl text-xs font-bold transition ${
                         isCompletelyOutOfStock || (sizesStockMap[currentSelectedSize] !== undefined && Number(sizesStockMap[currentSelectedSize]) <= 0)
                           ? 'bg-neutral-800 text-neutral-500 cursor-not-allowed border border-neutral-800' 
-                          : 'bg-white text-black hover:bg-gray-200 cursor-pointer'
+                          : 'bg-emerald-300 text-[#071009] hover:bg-emerald-200 cursor-pointer shadow-sm'
                       }`}
                     >
                       {isCompletelyOutOfStock || (sizesStockMap[currentSelectedSize] !== undefined && Number(sizesStockMap[currentSelectedSize]) <= 0) ? t.outOfStock : t.addToCart}
