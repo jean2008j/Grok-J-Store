@@ -170,6 +170,8 @@ export function StoreView() {
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
   const [isProcessing, setIsProcessing] = useState(false);
+  const [lastOrderId, setLastOrderId] = useState<string | number | null>(null);
+  const [lastOrderTotal, setLastOrderTotal] = useState<number | null>(null);
   const [checkoutStep, setCheckoutStep] = useState('cart');
   const [paymentMethod, setPaymentMethod] = useState('cod');
   const [selectedCity, setSelectedCity] = useState(SYRIAN_CITIES[0]);
@@ -372,6 +374,13 @@ export function StoreView() {
   const handleCompleteOrder = async (e: any) => {
     e.preventDefault();
 
+    if (isProcessing) return;
+    if (cart.length === 0) {
+      alert(lang === 'AR' ? 'السلة فارغة. أضف منتجاً قبل تأكيد الطلب.' : 'Your cart is empty. Add an item before checking out.');
+      setCheckoutStep('cart');
+      return;
+    }
+
     if (customerInfo.name.trim().length < 2) {
       alert(lang === 'AR' ? 'يرجى إدخال الاسم الكامل' : 'Please enter your full name');
       return;
@@ -397,14 +406,6 @@ export function StoreView() {
 
     const paymentText = paymentMethod === 'cod' ? 'Cash' : (paymentMethod === 'syriatel' ? `Syriatel Cash (${customerInfo.txCode.trim()})` : `Sham Cash (${customerInfo.txCode.trim()})`);
 
-    const orderItemsPayload = cart.map(item => ({
-      id: item.id,
-      name: item.name,
-      price: item.price,
-      qty: item.quantity,
-      selectedSize: item.selectedSize
-    }));
-
     try {
       const result = await placeOrder({
         data: {
@@ -426,6 +427,8 @@ export function StoreView() {
       });
 
       if (result.ok) {
+        setLastOrderId(result.order?.id ?? null);
+        setLastOrderTotal(Number(result.total ?? totalAmount));
         await fetchSupabaseProducts();
         if (isPrivateUnlocked) {
           const again = await unlockPrivate({ data: { password: privatePassword } });
@@ -450,6 +453,8 @@ export function StoreView() {
     setTimeout(() => {
       setCheckoutStep('cart');
       setLocationStatus(null);
+      setLastOrderId(null);
+      setLastOrderTotal(null);
     }, 300);
   };
 
@@ -1099,6 +1104,17 @@ export function StoreView() {
                 <div className="text-center py-8 space-y-4">
                   <div className="w-12 h-12 bg-emerald-500/20 text-emerald-400 rounded-full flex items-center justify-center mx-auto font-bold text-lg">✓</div>
                   <h4 className="font-bold text-lg">{t.orderConfirmed}</h4>
+                  {lastOrderId !== null && (
+                    <div className="rounded-xl border border-neutral-800 bg-neutral-950 p-3 space-y-1">
+                      <p className="text-xs text-neutral-400">{lang === 'AR' ? 'رقم الطلب' : 'Order number'}</p>
+                      <p className="font-mono text-lg font-black tracking-wider text-white">#{lastOrderId}</p>
+                    </div>
+                  )}
+                  {lastOrderTotal !== null && (
+                    <div className="flex justify-between text-sm font-bold px-2">
+                      <span>{t.total}</span><span>${lastOrderTotal.toLocaleString()}</span>
+                    </div>
+                  )}
                   <p className="text-xs text-emerald-400 font-semibold p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/20">{paymentMethod === 'cod' ? t.successCodMsg : t.successOnlineMsg}</p>
                 </div>
               )}
@@ -1107,7 +1123,7 @@ export function StoreView() {
             <div className="pt-4 border-t border-neutral-800 space-y-2">
               {checkoutStep === 'cart' && (
                 <>
-                  <div className="flex justify-between font-black text-sm"><span>{t.total}</span><span>${subtotal}</span></div>
+                  <div className="flex justify-between font-black text-sm"><span>{t.total}</span><span>${totalAmount.toLocaleString()}</span></div>
                   <button disabled={cart.length === 0} onClick={() => setCheckoutStep('checkout')} className="w-full py-3 bg-white text-black font-bold rounded-xl text-xs disabled:opacity-50 cursor-pointer">
                     {t.proceedCheckout}
                   </button>
