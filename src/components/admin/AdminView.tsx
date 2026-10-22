@@ -38,6 +38,7 @@ const ADMIN_STORE_KEY = 'jstore_admin_pw';
 export function AdminView() {
   const [activeTab, setActiveTab] = useState('overview');
   const [orderSubTab, setOrderSubTab] = useState<'pending' | 'completed'>('pending');
+  const [orderSearchTerm, setOrderSearchTerm] = useState('');
 
   const [products, setProducts] = useState<any[]>([]);
   const [orders, setOrders] = useState<any[]>([]);
@@ -57,6 +58,7 @@ export function AdminView() {
   const [showPrintPrompt, setShowPrintPrompt] = useState(false);
   const [isRefreshingOrders, setIsRefreshingOrders] = useState(false);
   const [updatingOrderId, setUpdatingOrderId] = useState<number | null>(null);
+  const [isBulkUpdatingStatus, setIsBulkUpdatingStatus] = useState(false);
   const [deletingOrderIds, setDeletingOrderIds] = useState<number[]>([]);
 
   // Edit Modal State
@@ -288,19 +290,22 @@ export function AdminView() {
   const fetchOrders = async () => {
     setIsRefreshingOrders(true);
     setSelectedOrderIds([]);
-    const { data, error } = await supabase
-      .from('orders')
-      .select('*')
-      .order('created_at', { ascending: false });
-    
-    if (data) {
-      setOrders(data);
-    } else if (error) {
-      console.log('Error fetching orders:', error.message);
-    }
-    setTimeout(() => {
+    try {
+      const { data, error } = await supabase
+        .from('orders')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        showToast('Could not load orders. Check the connection and try again.', 'error');
+        return;
+      }
+      setOrders(Array.isArray(data) ? data : []);
+    } catch {
+      showToast('Could not load orders. Check the connection and try again.', 'error');
+    } finally {
       setIsRefreshingOrders(false);
-    }, 600);
+    }
   };
 
   const calculateAnalytics = () => {
@@ -473,24 +478,71 @@ export function AdminView() {
   };
 
   const handleUpdateOrderStatus = async (orderId: number, newStatus: string) => {
-    setUpdatingOrderId(orderId);
-    const { error } = await supabase
-      .from('orders')
-      .update({ status: newStatus })
-      .eq('id', orderId);
-
-    if (!error) {
-      setOrders(orders.map(o => o.id === orderId ? { ...o, status: newStatus } : o));
-      if (selectedOrder && selectedOrder.id === orderId) {
-        setSelectedOrder({ ...selectedOrder, status: newStatus });
-      }
-      showToast(`Order #${orderId} status updated successfully`);
-    } else {
-      showToast('Failed to update order status', 'error');
+    if (newStatus !== 'pending' && newStatus !== 'completed') {
+      showToast('Invalid order status', 'error');
+      return;
     }
-    setTimeout(() => {
+
+    setUpdatingOrderId(orderId);
+    try {
+      const { error } = await supabase
+        .from('orders')
+        .update({ status: newStatus })
+        .eq('id', orderId);
+
+      if (error) {
+        showToast('Failed to update order status. Please retry.', 'error');
+        return;
+      }
+
+      setOrders((current) => current.map((order) =>
+        order.id === orderId ? { ...order, status: newStatus } : order
+      ));
+      setSelectedOrder((current: any) =>
+        current && current.id === orderId ? { ...current, status: newStatus } : current
+      );
+      showToast(`Order #${orderId} status updated successfully`);
+    } catch {
+      showToast('Failed to update order status. Please retry.', 'error');
+    } finally {
       setUpdatingOrderId(null);
-    }, 400);
+    }
+  };
+
+  const handleBulkUpdateOrderStatus = async (newStatus: 'pending' | 'completed') => {
+    const ids = [...selectedOrderIds];
+    if (ids.length === 0 || isBulkUpdatingStatus) return;
+
+    setIsBulkUpdatingStatus(true);
+    const results = await Promise.all(ids.map(async (id) => {
+      try {
+        const { error } = await supabase
+          .from('orders')
+          .update({ status: newStatus })
+          .eq('id', id);
+        return { id, ok: !error };
+      } catch {
+        return { id, ok: false };
+      }
+    }));
+
+    const succeeded = results.filter((result) => result.ok).map((result) => result.id);
+    const failed = results.length - succeeded.length;
+    setOrders((current) => current.map((order) =>
+      succeeded.includes(order.id) ? { ...order, status: newStatus } : order
+    ));
+    setSelectedOrder((current: any) =>
+      current && succeeded.includes(current.id) ? { ...current, status: newStatus } : current
+    );
+    setSelectedOrderIds([]);
+    setIsBulkUpdatingStatus(false);
+
+    if (failed > 0) {
+      showToast(`${succeeded.length} order(s) updated; ${failed} failed. Refreshing orders…`, 'error');
+      await fetchOrders();
+    } else {
+      showToast(`${succeeded.length} order(s) marked as ${newStatus}`);
+    }
   };
 
   const handleDeleteOrder = async (orderId: number) => {
@@ -848,11 +900,19 @@ export function AdminView() {
 
   const filteredOrders = orders.filter(o => {
     const status = (o.status || 'pending').toLowerCase();
-    if (orderSubTab === 'completed') {
-      return status === 'completed';
-    } else {
-      return status !== 'completed';
-    }
+    const matchesStatus = orderSubTab === 'completed'
+      ? status === 'completed'
+      : status !== 'completed';
+    const search = orderSearchTerm.trim().toLowerCase();
+    const matchesSearch = !search || [
+      o.id,
+      o.customer_name,
+      o.phone,
+      o.address,
+      o.payment_method,
+      o.order_type,
+    ].some((value) => String(value ?? '').toLowerCase().includes(search));
+    return matchesStatus && matchesSearch;
   });
 
   const isAllFilteredSelected = filteredOrders.length > 0 && filteredOrders.every(o => selectedOrderIds.includes(o.id));
@@ -2016,6 +2076,29 @@ export function AdminView() {
 
           {activeTab === 'orders' && (
             <div className="space-y-6">
+              <div className="grid grid-cols-2 xl:grid-cols-4 gap-3">
+                <div className="rounded-2xl border border-zinc-800 bg-zinc-900 p-4">
+                  <p className="text-[11px] font-bold uppercase tracking-wide text-zinc-500">All Orders</p>
+                  <p className="mt-2 text-2xl font-black text-white">{orders.length}</p>
+                  <p className="mt-1 text-[11px] text-zinc-500">Across all statuses</p>
+                </div>
+                <div className="rounded-2xl border border-amber-500/20 bg-amber-500/5 p-4">
+                  <p className="text-[11px] font-bold uppercase tracking-wide text-amber-300">Pending</p>
+                  <p className="mt-2 text-2xl font-black text-amber-300">{orders.filter((order) => (order.status || 'pending').toLowerCase() !== 'completed').length}</p>
+                  <p className="mt-1 text-[11px] text-zinc-500">Need attention</p>
+                </div>
+                <div className="rounded-2xl border border-emerald-500/20 bg-emerald-500/5 p-4">
+                  <p className="text-[11px] font-bold uppercase tracking-wide text-emerald-300">Completed</p>
+                  <p className="mt-2 text-2xl font-black text-emerald-300">{orders.filter((order) => (order.status || 'pending').toLowerCase() === 'completed').length}</p>
+                  <p className="mt-1 text-[11px] text-zinc-500">Successfully fulfilled</p>
+                </div>
+                <div className="rounded-2xl border border-zinc-800 bg-zinc-900 p-4">
+                  <p className="text-[11px] font-bold uppercase tracking-wide text-zinc-500">Total Order Value</p>
+                  <p className="mt-2 text-2xl font-black text-white">${orders.reduce((sum, order) => sum + (Number(order.totals ?? order.total) || 0), 0).toLocaleString()}</p>
+                  <p className="mt-1 text-[11px] text-zinc-500">All recorded orders</p>
+                </div>
+              </div>
+
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div className="flex items-center gap-2">
                   <button
@@ -2047,14 +2130,60 @@ export function AdminView() {
                 </div>
 
                 {selectedOrderIds.length > 0 && (
-                  <button
-                    onClick={handleDeleteSelectedOrders}
-                    className="px-4 py-2 rounded-xl bg-red-600 hover:bg-red-500 text-white font-bold text-xs shadow-md transition flex items-center justify-center gap-2"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                    <span>Delete Selected ({selectedOrderIds.length})</span>
-                  </button>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <button
+                      onClick={() => handleBulkUpdateOrderStatus('pending')}
+                      disabled={isBulkUpdatingStatus || selectedOrderIds.every((id) => orders.find((order) => order.id === id)?.status === 'pending')}
+                      className="px-3 py-2 rounded-xl border border-amber-500/30 bg-amber-500/10 text-amber-300 disabled:opacity-40 font-bold text-xs transition"
+                    >
+                      {isBulkUpdatingStatus ? 'Updating…' : 'Mark Pending'}
+                    </button>
+                    <button
+                      onClick={() => handleBulkUpdateOrderStatus('completed')}
+                      disabled={isBulkUpdatingStatus || selectedOrderIds.every((id) => orders.find((order) => order.id === id)?.status === 'completed')}
+                      className="px-3 py-2 rounded-xl border border-emerald-500/30 bg-emerald-500/10 text-emerald-300 disabled:opacity-40 font-bold text-xs transition"
+                    >
+                      {isBulkUpdatingStatus ? 'Updating…' : 'Mark Completed'}
+                    </button>
+                    <button
+                      onClick={handleDeleteSelectedOrders}
+                      disabled={isBulkUpdatingStatus || deletingOrderIds.length > 0}
+                      className="px-4 py-2 rounded-xl bg-red-600 hover:bg-red-500 text-white disabled:opacity-40 font-bold text-xs shadow-md transition flex items-center justify-center gap-2"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                      <span>Delete Selected ({selectedOrderIds.length})</span>
+                    </button>
+                  </div>
                 )}
+              </div>
+
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 rounded-2xl border bg-zinc-900 border-zinc-800">
+                <div className="relative w-full sm:max-w-md">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500" />
+                  <input
+                    value={orderSearchTerm}
+                    onChange={(e) => setOrderSearchTerm(e.target.value)}
+                    placeholder="Search by order ID, customer, phone, address, or payment…"
+                    aria-label="Search orders"
+                    className="w-full pl-9 pr-10 py-2.5 rounded-xl border bg-zinc-950 border-zinc-800 text-sm text-white placeholder:text-zinc-500 outline-none focus:border-emerald-500/50"
+                  />
+                  {orderSearchTerm && (
+                    <button
+                      onClick={() => setOrderSearchTerm('')}
+                      aria-label="Clear order search"
+                      className="absolute right-2 top-1/2 -translate-y-1/2 p-1 rounded-lg text-zinc-400 hover:text-white"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  )}
+                </div>
+                <p className="text-xs text-zinc-400 shrink-0">
+                  Showing <span className="font-bold text-white">{filteredOrders.length}</span> of {orders.filter((order) =>
+                    orderSubTab === 'completed'
+                      ? (order.status || 'pending').toLowerCase() === 'completed'
+                      : (order.status || 'pending').toLowerCase() !== 'completed'
+                  ).length} orders
+                </p>
               </div>
 
               <div className="rounded-2xl border overflow-hidden shadow-sm bg-zinc-900 border-zinc-800">
