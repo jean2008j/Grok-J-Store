@@ -1,0 +1,15 @@
+@import "tailwindcss";
+
+html, body, #root {
+  margin: 0;
+  background: #000;
+  color: #fff;
+}
+
+button, [role="button"] {
+  cursor: pointer;
+}
+
+button:disabled {
+  cursor: not-allowed;
+}
