@@ -606,6 +606,16 @@ export function StoreView() {
         </div>
       </header>
 
+      <nav aria-label={lang === 'AR' ? 'معلومات المتجر' : 'Store information'} className="border-b border-white/5 bg-[#0b0e0c] px-3 py-2">
+        <div className="mx-auto flex max-w-7xl justify-center">
+          <a href="#store-info" className="inline-flex items-center gap-2 rounded-full border border-emerald-300/25 bg-emerald-300/[0.07] px-4 py-2 text-[11px] font-bold text-emerald-100 transition hover:bg-emerald-300/15 focus:outline-none focus:ring-2 focus:ring-emerald-300">
+            <span aria-hidden="true">ⓘ</span>
+            {lang === 'AR' ? 'سياسات المتجر · التوصيل · الدفع · الاستبدال والإرجاع' : 'Store policies · Delivery · Payment · Returns'}
+            <span aria-hidden="true">↓</span>
+          </a>
+        </div>
+      </nav>
+
       {/* Editorial hero: product photography makes the storefront feel distinct */}
       <section className="px-3 sm:px-6 pt-4 sm:pt-7">
         <div className="relative isolate mx-auto max-w-7xl overflow-hidden rounded-[1.5rem] sm:rounded-[2rem] border border-white/10 bg-[#080a09] shadow-[0_28px_90px_rgba(0,0,0,0.38)]">
